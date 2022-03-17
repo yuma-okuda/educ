@@ -8,7 +8,7 @@ import json
 import random,string
 
 app = Flask(__name__)
-engine = create_engine('mysql+mysqlconnector://yuma:test@localhost/educ_namba')
+engine = create_engine('mysql+mysqlconnector://yuri:test@localhost/educ_yuri')
 session = sessionmaker(bind=engine)()
 
 def randomname(n):
@@ -50,6 +50,37 @@ def hello():
         grade = result.grade 
     return render_template('hello.html', title='呼び出し側でタイトル設定', name=name, grade=grade)
 
+@app.route('/after-line-login')
+def form():
+    req = request.args
+    token = req.get("token")
+    t = f"select * from users where token='{token}';"
+    results = session.execute(t)
+    name = results.name
+    grade = results.grade
+    # select * from user where 
+    # name と gradeを取得
+    return render_template('after-line-login.html', name=name, grade=grade)
+
+@app.route('/send-message-form', methods=['post'])
+def send_message():
+        message = request.form['message']
+        token = request.form['token']
+		# tokenからline_tokenを取得(SELECT)
+        t = f"select * from users where token='{token}';"
+        results = session.execute(t)
+        for result in results: 
+            line_token = result.line_token
+        #line_token="0mYfKNOzzipCxCxWl6h8AakuscN5jAxCW1oi56Vj8UO"
+        headers = {
+          "Content-Type":"application/x-www-form-urlencoded",
+          "Authorization":"Bearer "+line_token
+        }
+        data = {"message":message}
+        url = "https://notify-api.line.me/api/notify"
+        response = requests.post(url,headers = headers,data= data)
+        return render_template('after-line-send.html')
+
 @app.route('/line-auth')
 def line_auth():
     req = request.args
@@ -89,7 +120,6 @@ def line_callback():
     session.commit()
     redirect_url = "/after-line-login?token="+token
     return redirect(redirect_url)
-
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=8080)
