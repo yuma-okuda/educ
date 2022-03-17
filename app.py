@@ -28,9 +28,9 @@ def post():
     t = text("SELECT * from  users WHERE name = '" + html_name + "'")
     results = session.execute(t)
     for result in results: 
-        true_password = result.passward
+        true_password = result.password
     if(true_password == html_pass):
-        t = text("UPDATE users SET token = '" + token + "' WHERE name = '" + html_name + "' AND passward = '"+ html_pass +"';")
+        t = text("UPDATE users SET token = '" + token + "' WHERE name = '" + html_name + "' AND password = '"+ html_pass +"';")
         result = session.execute(t)
         session.commit()
         redirect_url = "/home?token=" + token
@@ -56,11 +56,16 @@ def form():
     token = req.get("token")
     t = f"select * from users where token='{token}';"
     results = session.execute(t)
-    name = results.name
-    grade = results.grade
-    # select * from user where 
-    # name と gradeを取得
-    return render_template('after-line-login.html', name=name, grade=grade)
+    for row in results:
+        name = row.name
+        grade = row.grade
+        return render_template('after-line-login.html', name=name, grade=grade)
+    
+    # name = results.name
+    # grade = results.grade
+    # # select * from user where 
+    # # name と gradeを取得
+    # return render_template('after-line-login.html', name=name, grade=grade)
 
 @app.route('/send-message-form', methods=['post'])
 def send_message():
